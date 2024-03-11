@@ -1,0 +1,69 @@
+
+intro = stack [slow 2 $ s "[ ~ cp]*4", slow 2 $ s "mash*4"]
+baseOne = stack [s "bd bd ht lt cp cp sd:2 sd:2", struct "<t(4,8) t(3,8,1)>" $ s "ifdrums" # note "c'maj f'min" # room 0.4]
+baseTwo = stack[slow 2 $ s "cosmicg:3 silence silence silence" # gain 0.7, slow 2 $ s "gab" <| n (run 10)]
+baseThree = stack[s "haw" <| n (run 4),  s "blip" <| n (run 13) # gain (range 0.9 1.2 rand)]
+buildHigh = palindrome $ s "arpy*8" # note ((scale "augmented" "7 3 1 6 5") + 6) # room 0.4
+buildMidOne = sound "bd bd ht lt cp cp sd:2 sd:2"
+buildMidTwo = stack[s "<feel(5,8,1)>" # room 0.95 # gain 1.3 # up "1", s "feel" # room 0.95 # gain 1.3 # up "-2"]
+buildLow = s "f" # stretch 2 # gain 0.75
+explosion = slow 2 $ s "sundance:1" # gain 1.2
+mainHigh = s "hh*2!4"
+mainMid = stack[fast 1.5 $ s "bd hh [cp ~] [~ mt]", fast 1.5 $ s "<mash(3,8) mash(5,8,1)>" # speed "2 1" # squiz 1.1, s "circus:1 ~ ~ ~ "]
+endBeep = s "cosmicg:3 silence silence silence" # gain 0.7
+
+-- midi
+midiIntro = ccv "2 4 -2 1" # ccn 0 # s "midi"
+midiEnd = ccv "2" # ccn 0 # s "midi"
+midiBase = ccv "127 0 0 64 127 0" # ccn 1 # s "midi"
+midiBuild = ccv "40 10" # ccn 2 # s "midi"
+midiMain = ccv "2" # ccn 2 # s "midi"
+midiSlow = ccv "20 16 12 8 4" # ccn 3 # s "midi"
+
+playMusic = do {
+  d2 $ qtrigger $ filterWhen (>=0) $ seqP [
+    (0, 6, intro),
+    (0, 42, fast 4 midiIntro),
+    (6, 12, intro # gain 0.8)
+  ];
+  d3 $ qtrigger $ filterWhen (>=0) $ seqP [
+    (6, 50, midiBase),
+    (6, 42, baseOne),
+    (12, 42, baseTwo),
+    (18, 22, baseThree),
+    (22, 26, baseThree # up 4),
+    (26, 30, baseThree),
+    (30, 34, baseThree # up 4),
+    (34, 42, degradeBy(0.5) baseThree # gain 0.8),
+    (42, 46, degradeBy(0.5) baseThree # gain 0.65),
+    (46, 50, degradeBy(0.5) baseThree # gain 0.45)
+  ];
+  d4 $ qtrigger $ filterWhen (>=0) $ seqP [
+    (42, 58, buildHigh),
+    (46, 58, buildMidOne # gain 1.1),
+    (50, 58, buildMidTwo),
+    (50, 60, fast 6 midiBuild),
+    (50, 58, buildLow),
+    (58, 59, explosion)
+  ];
+  d5 $ qtrigger $ filterWhen (>=0) $ seqP [
+    (60, 62, mainHigh),
+    (60, 86, midiEnd),
+    (60, 86, midiMain),
+    (60, 86, midiSlow),
+    (62, 84, mainMid)
+  ];
+  d6 $ qtrigger $ filterWhen (>=0) $ seqP [
+    (68, 76, baseOne # gain 0.5),
+    (68, 80, baseTwo # gain 0.5),
+    (68, 68, baseThree # gain 0.5),
+    (76, 86, midiEnd),
+    (76, 78, slow 2 endBeep),
+    (78, 82, degradeBy(0.7) $ slow 2 endBeep # gain 0.6),
+    (82, 86, degradeBy(0.5) $ slow 3 endBeep # gain 0.5)
+  ]
+}
+
+playMusic
+
+hush
